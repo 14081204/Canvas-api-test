@@ -68,33 +68,76 @@ window.onload = () => {
         //showimage.clearRect(0, 0, canvas.width, canvas.height);
         showimage.drawImage(img,160,0);
     }*/
-
-    
-
-    var canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
-    var context2D=canvas.getContext("2d");
+    var canvas=document.getElementById("myCanvas") as HTMLCanvasElement;
+    var context=canvas.getContext("2d");  
     var stage = new DisplayObjectContainer();
-
+    
     setInterval(() => {
-        context2D.clearRect(0, 0, canvas.width, canvas.height);
-        stage.draw(context2D);
-    },100)
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        stage.draw(context);
+    }, 100)
 
     var image = document.createElement("img");
-    image.src = "flower.jpg";
-    var textField = new textField();
-    textField.x = 20;
-    textField.y = 20;
-    textField.text = "Hello World";
-    textField.color = "#00FF00";
-
+    image.src="src/flower.jpg"
     var Bitmap = new imageBitmap();
-    Bitmap.Image = image;
+    Bitmap.image = image;
     Bitmap.x = 0;
     Bitmap.y = 0;
 
+    var textField1 = new TextField();
+    textField1.x = 20;
+    textField1.y = 20;
+    textField1.text = "Hello World";
+    textField1.color = "#00FF00";
+
     image.onload = () => {
         stage.addChild(Bitmap);
-        stage.addChild(textField);
+        stage.addChild(textField1);
     }
 };
+
+interface Drawable {
+    draw(context2D: CanvasRenderingContext2D);
+}
+
+class DisplayObjectContainer implements Drawable {
+    array: Drawable[] = [];
+    addChild(displayObject: DisplayObject) {
+        this.array.push(displayObject);
+    }
+    draw(context2D: CanvasRenderingContext2D) {
+        for (let drawable of this.array) {
+            drawable.draw(context2D);
+        }
+    }
+}
+
+class DisplayObject implements Drawable {
+    x = 0;
+    y = 0;
+    draw(context2D: CanvasRenderingContext2D) {
+    }
+}
+
+class imageBitmap extends DisplayObject {
+    image: HTMLImageElement;
+    x = 0;
+    y = 0;
+    imageInfo = "";
+    draw(context2D: CanvasRenderingContext2D) {
+        context2D.drawImage(this.image, this.x, this.y);
+    }
+}
+
+class TextField extends DisplayObject {
+    x = 0;
+    y = 0;
+    color = "";
+    text = "";
+
+    draw(context2D: CanvasRenderingContext2D) {
+        context2D.fillStyle = this.color;
+        context2D.fillText(this.text, this.x, this.y);
+    }
+}
+

@@ -20,6 +20,11 @@
     }
 
 }*/
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 window.onload = function () {
     /*var el = document.getElementById('content');
     var greeter = new Greeter(el);
@@ -63,26 +68,78 @@ window.onload = function () {
         showimage.drawImage(img,160,0);
     }*/
     var canvas = document.getElementById("myCanvas");
-    var context2D = canvas.getContext("2d");
+    var context = canvas.getContext("2d");
     var stage = new DisplayObjectContainer();
     setInterval(function () {
-        context2D.clearRect(0, 0, canvas.width, canvas.height);
-        stage.draw(context2D);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        stage.draw(context);
     }, 100);
     var image = document.createElement("img");
-    image.src = "flower.jpg";
-    var textField = new textField();
-    textField.x = 20;
-    textField.y = 20;
-    textField.text = "Hello World";
-    textField.color = "#00FF00";
-    var imageBitmap = new Bitmap();
-    imageBitmap.imageInfo = "flower.jpg";
-    imageBitmap.x = 0;
-    imageBitmap.y = 0;
+    image.src = "src/flower.jpg";
+    var Bitmap = new imageBitmap();
+    Bitmap.image = image;
+    Bitmap.x = 0;
+    Bitmap.y = 0;
+    var textField1 = new TextField();
+    textField1.x = 20;
+    textField1.y = 20;
+    textField1.text = "Hello World";
+    textField1.color = "#00FF00";
     image.onload = function () {
-        stage.addChild(imageBitmap);
-        stage.addChild(textField);
+        stage.addChild(Bitmap);
+        stage.addChild(textField1);
     };
 };
+var DisplayObjectContainer = (function () {
+    function DisplayObjectContainer() {
+        this.array = [];
+    }
+    DisplayObjectContainer.prototype.addChild = function (displayObject) {
+        this.array.push(displayObject);
+    };
+    DisplayObjectContainer.prototype.draw = function (context2D) {
+        for (var _i = 0, _a = this.array; _i < _a.length; _i++) {
+            var drawable = _a[_i];
+            drawable.draw(context2D);
+        }
+    };
+    return DisplayObjectContainer;
+}());
+var DisplayObject = (function () {
+    function DisplayObject() {
+        this.x = 0;
+        this.y = 0;
+    }
+    DisplayObject.prototype.draw = function (context2D) {
+    };
+    return DisplayObject;
+}());
+var imageBitmap = (function (_super) {
+    __extends(imageBitmap, _super);
+    function imageBitmap() {
+        _super.apply(this, arguments);
+        this.x = 0;
+        this.y = 0;
+        this.imageInfo = "";
+    }
+    imageBitmap.prototype.draw = function (context2D) {
+        context2D.drawImage(this.image, this.x, this.y);
+    };
+    return imageBitmap;
+}(DisplayObject));
+var TextField = (function (_super) {
+    __extends(TextField, _super);
+    function TextField() {
+        _super.apply(this, arguments);
+        this.x = 0;
+        this.y = 0;
+        this.color = "";
+        this.text = "";
+    }
+    TextField.prototype.draw = function (context2D) {
+        context2D.fillStyle = this.color;
+        context2D.fillText(this.text, this.x, this.y);
+    };
+    return TextField;
+}(DisplayObject));
 //# sourceMappingURL=main.js.map
