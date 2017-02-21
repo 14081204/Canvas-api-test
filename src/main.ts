@@ -181,11 +181,13 @@ window.onload = () => {
         //showimage.clearRect(0, 0, canvas.width, canvas.height);
         showimage.drawImage(img,160,0);
     }*/
+    
     var canvas=document.getElementById("myCanvas") as HTMLCanvasElement;
     var context=canvas.getContext("2d");  
 
     var stage = new DisplayObjectContainer();
-    
+    stage.alpha = 0.8;
+    stage.x = 50;
     
     setInterval(() => {
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -193,21 +195,29 @@ window.onload = () => {
     }, 100)
 
     var image = document.createElement("img");
-    image.src="src/flower.jpg"
     var Bitmap = new imageBitmap();
+    image.src="src/flower.jpg"
     Bitmap.image = image;
-    Bitmap.x = 0;
-    Bitmap.y = 0;
+    Bitmap.x = 10;
+    Bitmap.y = 10;
 
     var textField1 = new TextField();
     textField1.x = 20;
     textField1.y = 20;
     textField1.text = "Hello World";
-    textField1.color = "#00FF00";
+    textField1.color = "#FF0000";
+    textField1.alpha = 0.5;
+    
+    var textField2 = new TextField();
+    textField2.x = 50;
+    textField2.y = 20;
+    textField2.text = "Hello World";
+    textField2.color = "#FF0000";
 
     image.onload = () => {
         stage.addChild(Bitmap);
         stage.addChild(textField1);
+        stage.addChild(textField2);
     }
 };
 
@@ -215,29 +225,7 @@ interface Drawable {
     draw(context2D: CanvasRenderingContext2D);
 }
 
-class DisplayObjectContainer extends DisplayObject {
-    array: Drawable[] = [];
-    addChild(displayObject: DisplayObject) {
-        if(this.array.indexOf(displayObject) == -1){
-            this.array.push(displayObject);
-            displayObject.parent = this;
-        }        
-    }
-    removeChild(displayObject:DisplayObject){
-        for(var element of this.array){
-            if(element == displayObject){
-                var index = this.array.indexOf(displayObject);
-                this.array.splice(index);
-                return;
-            }
-        }
-    }
-    render(context2D: CanvasRenderingContext2D) {
-        for (let drawable of this.array) {
-            drawable.draw(context2D);
-        }
-    }
-}
+
 
 class DisplayObject implements Drawable {
     x = 0;
@@ -305,3 +293,26 @@ class TextField extends DisplayObject {
     }
 }
 
+class DisplayObjectContainer extends DisplayObject {
+    array: Drawable[] = [];
+    addChild(displayObject: DisplayObject) {
+        if(this.array.indexOf(displayObject) == -1){
+            this.array.push(displayObject);
+            displayObject.parent = this;
+        }        
+    }
+    removeChild(displayObject:DisplayObject){
+        for(var element of this.array){
+            if(element == displayObject){
+                var index = this.array.indexOf(displayObject);
+                this.array.splice(index);
+                return;
+            }
+        }
+    }
+    render(context2D: CanvasRenderingContext2D) {
+        for (let drawable of this.array) {
+            drawable.draw(context2D);
+        }
+    }
+}
