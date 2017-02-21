@@ -1,4 +1,4 @@
-interface Drawable{
+/*interface Drawable{
     draw(context2D : CanvasRenderingContext2D);
 }
 
@@ -42,3 +42,4 @@ class DisplayObject implements Drawable{
     }
 }
 
+*/
