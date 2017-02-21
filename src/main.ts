@@ -215,14 +215,15 @@ interface Drawable {
     draw(context2D: CanvasRenderingContext2D);
 }
 
-class DisplayObjectContainer implements Drawable {
+class DisplayObjectContainer extends DisplayObject {
     array: Drawable[] = [];
-    addChild(displayObject: Drawable) {
+    addChild(displayObject: DisplayObject) {
         if(this.array.indexOf(displayObject) == -1){
             this.array.push(displayObject);
+            displayObject.parent = this;
         }        
     }
-    removeChild(displayObject:Drawable){
+    removeChild(displayObject:DisplayObject){
         for(var element of this.array){
             if(element == displayObject){
                 var index = this.array.indexOf(displayObject);
@@ -231,7 +232,7 @@ class DisplayObjectContainer implements Drawable {
             }
         }
     }
-    draw(context2D: CanvasRenderingContext2D) {
+    render(context2D: CanvasRenderingContext2D) {
         for (let drawable of this.array) {
             drawable.draw(context2D);
         }
@@ -259,7 +260,22 @@ class DisplayObject implements Drawable {
     }
 
     draw(context2D: CanvasRenderingContext2D) {
-        
+        this.matrix.updateFromDisplayObject(this.x, this.y, this.scaleX, this.scaleY,this.rotation);
+
+        if(this.parent){
+            this.globalAlpha = this.parent.globalAlpha * this.alpha;
+            this.globalMatrix = math.matrixAppendMatrix(this.matrix, this.parent.globalMatrix);//?
+        }else{
+            this.globalAlpha = this.alpha;
+            this.globalMatrix = this.matrix;
+        }
+
+        context2D.globalAlpha = this.globalAlpha;
+        context2D.setTransform(this.globalMatrix.a, this.globalMatrix.b, this.globalMatrix.c, this.globalMatrix.d, this.globalMatrix.tx, this.globalMatrix.ty);
+        this.render(context2D);
+    }
+    render(context2D : CanvasRenderingContext2D){
+
     }
 }
 
@@ -268,7 +284,11 @@ class imageBitmap extends DisplayObject {
     x = 0;
     y = 0;
     imageInfo = "";
-    draw(context2D: CanvasRenderingContext2D) {
+
+    constructor(){
+        super();
+    }
+    render(context2D: CanvasRenderingContext2D) {
         context2D.drawImage(this.image, this.x, this.y);
     }
 }
@@ -279,7 +299,7 @@ class TextField extends DisplayObject {
     color = "";
     text = "";
 
-    draw(context2D: CanvasRenderingContext2D) {
+    render(context2D: CanvasRenderingContext2D) {
         context2D.fillStyle = this.color;
         context2D.fillText(this.text, this.x, this.y);
     }
