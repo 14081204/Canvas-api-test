@@ -261,6 +261,7 @@ abstract class DisplayObject implements Drawable {
     globalAlpha = 1;
     parent : DisplayObjectContainer;
 
+    listeners : TouchEvents[] = [];
     width = 1;
     height = 1;
 
@@ -287,6 +288,11 @@ abstract class DisplayObject implements Drawable {
     abstract render(context2D : CanvasRenderingContext2D)
 
     abstract hitTest(x : number, y : number) : DisplayObject
+
+    addEventListener(type : TouchEventsType, touchFunction : Function, object : any, ifCapture? : boolean, priority? : number){
+        var touchEvent = new TouchEvents(type, touchFunction, object, ifCapture, priority);
+        this.listeners.push(touchEvent);
+    }
 }
 
 class imageBitmap extends DisplayObject {
@@ -315,7 +321,7 @@ class imageBitmap extends DisplayObject {
         rect.width = this.image.width;
         rect.height = this.image.height;
         if(rect.isPointInRectangle(x,y)){
-            //
+            TouchEventService.getInstance().addList(this);
             return this;
         }
         else{
@@ -342,7 +348,7 @@ class TextField extends DisplayObject {
         rect.width = this.size * this.text.length;
         rect.height = this.size;
         if(rect.isPointInRectangle(x,y)){
-            //
+            TouchEventService.getInstance().addList(this);
             return this;
         }
         else{
@@ -382,7 +388,7 @@ class DisplayObjectContainer extends DisplayObject {
         var result = null;
         if(rect.isPointInRectangle(x, y)){
             result = this;
-            //
+            TouchEventService.getInstance().addList(this);
             for(let i = this.array.length - 1; i >= 0; i--){
                 var child = this.array[i];
                 var point = new math.Point(x,y);
