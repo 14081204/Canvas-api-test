@@ -25,6 +25,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var _this = this;
 var math;
 (function (math) {
     var Point = (function () {
@@ -116,6 +117,29 @@ var math;
         return Matrix;
     }());
     math.Matrix = Matrix;
+    var Rectangle = (function () {
+        function Rectangle() {
+            this.x = 0;
+            this.y = 0;
+            this.width = 1;
+            this.height = 1;
+        }
+        Rectangle.prototype.isPointInRectangle = function (x, y) {
+            var point = new Point(x, y);
+            var rect = this;
+            if (point.x < rect.x + rect.width &&
+                point.x > rect.x &&
+                point.y < rect.y + rect.height &&
+                point.y > rect.y) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        };
+        return Rectangle;
+    }());
+    math.Rectangle = Rectangle;
 })(math || (math = {}));
 window.onload = function () {
     /*var el = document.getElementById('content');
@@ -161,35 +185,116 @@ window.onload = function () {
     }*/
     var canvas = document.getElementById("myCanvas");
     var context = canvas.getContext("2d");
+    var currentTarget;
+    var startTarget;
+    var isMouseDown = false;
+    var startPoint = new math.Point(-1, -1);
+    var movingPoint = new math.Point(0, 0);
     var stage = new DisplayObjectContainer();
     stage.alpha = 0.8;
     stage.x = 50;
+    stage.width = 400;
+    stage.height = 400;
+    var container = new DisplayObjectContainer();
+    container.width = 400;
+    container.height = 400;
+    var list = new imageBitmap("src/flower.jpg");
+    var button = new imageBitmap("src/finish.png");
+    container.addChild(list);
+    container.addChild(button);
+    button.x = 20;
+    button.y = 25;
+    stage.addChild(container);
+    stage.addEventListener(TouchEventsType.MOUSEDOWN, function () {
+        //alert("stage");
+    }, _this);
+    container.addEventListener(TouchEventsType.MOUSEMOVE, function () {
+    }, _this);
+    list.addEventListener(TouchEventsType.MOUSEMOVE, function () {
+        if (currentTarget == startTarget) {
+            container.x += (TouchEventService.stageX - movingPoint.x);
+            container.y += (TouchEventService.stageY - movingPoint.y);
+        }
+    }, _this);
+    button.addEventListener(TouchEventsType.CLICK, function () {
+        alert("Have already click!");
+    }, _this);
+    window.onmousedown = function (e) {
+        var x = e.offsetX - 3;
+        var y = e.offsetY - 3;
+        TouchEventService.stageX = x;
+        TouchEventService.stageY = y;
+        startPoint.x = x;
+        startPoint.y = y;
+        movingPoint.x = x;
+        movingPoint.y = y;
+        TouchEventService.currentType = TouchEventsType.MOUSEDOWN;
+        currentTarget = stage.hitTest(x, y);
+        startTarget = currentTarget;
+        TouchEventService.getInstance().execute();
+        isMouseDown = true;
+    };
+    window.onmouseup = function (e) {
+        var x = e.offsetX - 3;
+        var y = e.offsetY - 3;
+        TouchEventService.stageX = x;
+        TouchEventService.stageY = y;
+        var target = stage.hitTest(x, y);
+        if (target == currentTarget) {
+            TouchEventService.currentType = TouchEventsType.CLICK;
+        }
+        else {
+            TouchEventService.currentType = TouchEventsType.MOUSEUP;
+        }
+        TouchEventService.getInstance().execute();
+        currentTarget = null;
+        isMouseDown = false;
+    };
+    window.onmousemove = function (e) {
+        if (isMouseDown) {
+            var x = e.offsetX - 3;
+            var y = e.offsetY - 3;
+            TouchEventService.stageX = x;
+            TouchEventService.stageY = y;
+            TouchEventService.currentType = TouchEventsType.MOUSEMOVE;
+            currentTarget = stage.hitTest(x, y);
+            TouchEventService.getInstance().execute();
+            movingPoint.x = x;
+            movingPoint.y = y;
+        }
+    };
     setInterval(function () {
+        context.save();
         context.clearRect(0, 0, canvas.width, canvas.height);
         stage.draw(context);
+        context.restore();
     }, 100);
-    var image = document.createElement("img");
-    var Bitmap = new imageBitmap();
-    image.src = "src/flower.jpg";
-    Bitmap.image = image;
-    Bitmap.x = 10;
-    Bitmap.y = 10;
-    var textField1 = new TextField();
-    textField1.x = 20;
-    textField1.y = 20;
-    textField1.text = "Hello World";
-    textField1.color = "#FF0000";
-    textField1.alpha = 0.5;
-    var textField2 = new TextField();
-    textField2.x = 50;
-    textField2.y = 20;
-    textField2.text = "Hello World";
-    textField2.color = "#FF0000";
-    image.onload = function () {
-        stage.addChild(Bitmap);
-        stage.addChild(textField1);
-        stage.addChild(textField2);
-    };
+    /*
+        var image = document.createElement("img");
+        var Bitmap = new imageBitmap("flower.jpg");
+        image.src="src/flower.jpg"
+        Bitmap.image = image;
+        Bitmap.x = 10;
+        Bitmap.y = 10;
+    
+        var textField1 = new TextField();
+        textField1.x = 20;
+        textField1.y = 20;
+        textField1.text = "Hello World";
+        textField1.color = "#FF0000";
+        textField1.alpha = 0.5;
+        
+        var textField2 = new TextField();
+        textField2.x = 50;
+        textField2.y = 20;
+        textField2.text = "Hello World";
+        textField2.color = "#FF0000";
+    
+        image.onload = () => {
+            stage.addChild(Bitmap);
+            stage.addChild(textField1);
+            stage.addChild(textField2);
+        }*/
 };
 var DisplayObject = (function () {
     function DisplayObject() {
@@ -202,7 +307,9 @@ var DisplayObject = (function () {
         this.globalMatrix = null;
         this.alpha = 1;
         this.globalAlpha = 1;
-        this.parent = null;
+        this.listeners = [];
+        this.width = 1;
+        this.height = 1;
         this.matrix = new math.Matrix();
         this.globalMatrix = new math.Matrix();
     }
@@ -220,20 +327,43 @@ var DisplayObject = (function () {
         context2D.setTransform(this.globalMatrix.a, this.globalMatrix.b, this.globalMatrix.c, this.globalMatrix.d, this.globalMatrix.tx, this.globalMatrix.ty);
         this.render(context2D);
     };
-    DisplayObject.prototype.render = function (context2D) {
+    DisplayObject.prototype.addEventListener = function (type, touchFunction, object, ifCapture, priority) {
+        var touchEvent = new TouchEvents(type, touchFunction, object, ifCapture, priority);
+        this.listeners.push(touchEvent);
     };
     return DisplayObject;
 }());
 var imageBitmap = (function (_super) {
     __extends(imageBitmap, _super);
-    function imageBitmap() {
+    function imageBitmap(id) {
+        var _this = this;
         _super.call(this);
         this.x = 0;
         this.y = 0;
         this.imageInfo = "";
+        this.imageInfo = id;
+        this.image = new Image();
+        this.image.src = this.imageInfo;
+        this.image.onload = function () {
+            _this.width = _this.image.width;
+            _this.height = _this.image.height;
+        };
     }
     imageBitmap.prototype.render = function (context2D) {
         context2D.drawImage(this.image, this.x, this.y);
+    };
+    imageBitmap.prototype.hitTest = function (x, y) {
+        var rect = new math.Rectangle();
+        rect.x = rect.y = 0;
+        rect.width = this.image.width;
+        rect.height = this.image.height;
+        if (rect.isPointInRectangle(x, y)) {
+            TouchEventService.getInstance().addList(this);
+            return this;
+        }
+        else {
+            return null;
+        }
     };
     return imageBitmap;
 }(DisplayObject));
@@ -243,12 +373,26 @@ var TextField = (function (_super) {
         _super.apply(this, arguments);
         this.x = 0;
         this.y = 0;
+        this.size = 18;
         this.color = "";
         this.text = "";
     }
     TextField.prototype.render = function (context2D) {
         context2D.fillStyle = this.color;
-        context2D.fillText(this.text, this.x, this.y);
+        context2D.fillText(this.text, this.x, this.y + this.size);
+    };
+    TextField.prototype.hitTest = function (x, y) {
+        var rect = new math.Rectangle();
+        rect.x = rect.y = 0;
+        rect.width = this.size * this.text.length;
+        rect.height = this.size;
+        if (rect.isPointInRectangle(x, y)) {
+            TouchEventService.getInstance().addList(this);
+            return this;
+        }
+        else {
+            return null;
+        }
     };
     return TextField;
 }(DisplayObject));
@@ -276,9 +420,33 @@ var DisplayObjectContainer = (function (_super) {
     };
     DisplayObjectContainer.prototype.render = function (context2D) {
         for (var _i = 0, _a = this.array; _i < _a.length; _i++) {
-            var drawable = _a[_i];
-            drawable.draw(context2D);
+            var displayObject = _a[_i];
+            displayObject.draw(context2D);
         }
+    };
+    DisplayObjectContainer.prototype.hitTest = function (x, y) {
+        var rect = new math.Rectangle();
+        rect.x = rect.y = 0;
+        rect.width = this.width;
+        rect.height = this.height;
+        var result = null;
+        if (rect.isPointInRectangle(x, y)) {
+            result = this;
+            TouchEventService.getInstance().addList(this);
+            for (var i = this.array.length - 1; i >= 0; i--) {
+                var child = this.array[i];
+                var point = new math.Point(x, y);
+                var invertChildenLocalMatirx = math.invertMatrix(child.matrix);
+                var pointBasedOnChild = math.pointAppendMatrix(point, invertChildenLocalMatirx);
+                var hitTestResult = child.hitTest(pointBasedOnChild.x, pointBasedOnChild.y);
+                if (hitTestResult) {
+                    result = hitTestResult;
+                    break;
+                }
+            }
+            return result;
+        }
+        return null;
     };
     return DisplayObjectContainer;
 }(DisplayObject));

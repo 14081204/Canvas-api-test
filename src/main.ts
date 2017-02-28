@@ -204,15 +204,103 @@ window.onload = () => {
     var canvas=document.getElementById("myCanvas") as HTMLCanvasElement;
     var context=canvas.getContext("2d");  
 
+    var currentTarget;      
+    var startTarget;        
+    var isMouseDown = false;
+    var startPoint = new math.Point(-1,-1);
+    var movingPoint = new math.Point(0,0);
+
     var stage = new DisplayObjectContainer();
     stage.alpha = 0.8;
     stage.x = 50;
+    stage.width = 400;
+    stage.height = 400;
+
+    var container = new DisplayObjectContainer();
+    container.width = 400;
+    container.height = 400;
     
+    var list = new imageBitmap("src/flower.jpg");
+    var button = new imageBitmap("src/finish.png");
+
+    container.addChild(list);
+    container.addChild(button);
+    button.x = 20;
+    button.y = 25;
+    stage.addChild(container);
+
+    stage.addEventListener(TouchEventsType.MOUSEDOWN,()=>{
+        //alert("stage");
+    },this)
+
+    container.addEventListener(TouchEventsType.MOUSEMOVE,()=>{
+    },this)
+
+    list.addEventListener(TouchEventsType.MOUSEMOVE,()=>{
+        if(currentTarget == startTarget){
+        container.x += (TouchEventService.stageX - movingPoint.x);
+        container.y += (TouchEventService.stageY - movingPoint.y);
+        }
+    },this);
+
+    button.addEventListener(TouchEventsType.CLICK,()=>{
+        alert("Have already click!");
+    },this);
+
+    window.onmousedown = (e) =>{
+        let x = e.offsetX - 3;
+        let y = e.offsetY - 3;
+        TouchEventService.stageX = x;
+        TouchEventService.stageY = y;
+        startPoint.x = x;
+        startPoint.y = y;
+        movingPoint.x = x;
+        movingPoint.y = y;
+        TouchEventService.currentType = TouchEventsType.MOUSEDOWN;
+        currentTarget = stage.hitTest(x,y);
+        startTarget = currentTarget;
+        TouchEventService.getInstance().execute();
+        isMouseDown = true;
+    }
+
+    window.onmouseup = (e) =>{
+        let x = e.offsetX - 3;
+        let y = e.offsetY - 3;
+        TouchEventService.stageX = x;
+        TouchEventService.stageY = y;
+        var target = stage.hitTest(x,y);
+        if(target == currentTarget){
+            TouchEventService.currentType = TouchEventsType.CLICK;
+        }
+        else{
+            TouchEventService.currentType = TouchEventsType.MOUSEUP
+        }
+        TouchEventService.getInstance().execute();
+        currentTarget = null;
+        isMouseDown = false;
+    }
+
+    window.onmousemove = (e) =>{
+        if(isMouseDown){
+            let x = e.offsetX - 3;
+            let y = e.offsetY - 3;
+            TouchEventService.stageX = x;
+            TouchEventService.stageY = y;
+            TouchEventService.currentType = TouchEventsType.MOUSEMOVE;
+            currentTarget = stage.hitTest(x,y);
+            TouchEventService.getInstance().execute();
+            movingPoint.x = x;
+            movingPoint.y = y;
+        }
+    }
+
     setInterval(() => {
+        context.save();
         context.clearRect(0, 0, canvas.width, canvas.height);
         stage.draw(context);
+        context.restore();
     }, 100)
-
+/*
     var image = document.createElement("img");
     var Bitmap = new imageBitmap("flower.jpg");
     image.src="src/flower.jpg"
@@ -237,7 +325,7 @@ window.onload = () => {
         stage.addChild(Bitmap);
         stage.addChild(textField1);
         stage.addChild(textField2);
-    }
+    }*/
 };
 
 interface Drawable {
@@ -289,8 +377,8 @@ abstract class DisplayObject implements Drawable {
 
     abstract hitTest(x : number, y : number) : DisplayObject
 
-    addEventListener(type : TouchEventsType, touchFunction : Function, object : any, ifCapture? : boolean, priority? : number){
-        var touchEvent = new TouchEvents(type, touchFunction, object, ifCapture, priority);
+    addEventListener(type : TouchEventsType, touchFunction : Function, object : any, ifCapture? : boolean, priority?: number){
+        var touchEvent = new TouchEvents(type,touchFunction,object,ifCapture,priority);
         this.listeners.push(touchEvent);
     }
 }
