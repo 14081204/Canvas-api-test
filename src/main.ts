@@ -132,6 +132,25 @@ module math {
 
         }
     }
+
+    export class Rectangle{
+        x = 0;
+        y = 0;
+        width = 1;
+        height = 1;
+        isPointInRectangle(x : number, y : number){
+            var point = new Point(x, y);
+            var rect = this;
+            if(point.x < rect.x + rect.width &&
+               point.x > rect.x &&
+               point.y < rect.y + rect.height &&
+               point.y > rect.y){
+                   return true;
+               }else{
+                   return false;
+               }
+        }
+    }
 }
 
 window.onload = () => {
@@ -195,7 +214,7 @@ window.onload = () => {
     }, 100)
 
     var image = document.createElement("img");
-    var Bitmap = new imageBitmap();
+    var Bitmap = new imageBitmap("flower.jpg");
     image.src="src/flower.jpg"
     Bitmap.image = image;
     Bitmap.x = 10;
@@ -222,12 +241,12 @@ window.onload = () => {
 };
 
 interface Drawable {
-    draw(context2D: CanvasRenderingContext2D);
+    render(context2D: CanvasRenderingContext2D);
 }
 
 
 
-class DisplayObject implements Drawable {
+abstract class DisplayObject implements Drawable {
     x = 0;
     y = 0;
 
@@ -240,7 +259,10 @@ class DisplayObject implements Drawable {
 
     alpha = 1;
     globalAlpha = 1;
-    parent : DisplayObject = null;
+    parent : DisplayObjectContainer;
+
+    width = 1;
+    height = 1;
 
     constructor(){
         this.matrix = new math.Matrix();
@@ -262,9 +284,9 @@ class DisplayObject implements Drawable {
         context2D.setTransform(this.globalMatrix.a, this.globalMatrix.b, this.globalMatrix.c, this.globalMatrix.d, this.globalMatrix.tx, this.globalMatrix.ty);
         this.render(context2D);
     }
-    render(context2D : CanvasRenderingContext2D){
+    abstract render(context2D : CanvasRenderingContext2D)
 
-    }
+    abstract hitTest(x : number, y : number) : DisplayObject
 }
 
 class imageBitmap extends DisplayObject {
@@ -273,28 +295,64 @@ class imageBitmap extends DisplayObject {
     y = 0;
     imageInfo = "";
 
-    constructor(){
+    constructor(id : string){
         super();
+        this.imageInfo = id;
+        this.image = new Image();
+        this.image.src = this.imageInfo;
+        this.image.onload = () =>{
+            this.width = this.image.width;
+            this.height = this.image.height;
+        }
     }
     render(context2D: CanvasRenderingContext2D) {
         context2D.drawImage(this.image, this.x, this.y);
+    }
+
+    hitTest(x : number,y :number){
+        var rect = new math.Rectangle();
+        rect.x = rect.y = 0;
+        rect.width = this.image.width;
+        rect.height = this.image.height;
+        if(rect.isPointInRectangle(x,y)){
+            //
+            return this;
+        }
+        else{
+            return null;
+        }
     }
 }
 
 class TextField extends DisplayObject {
     x = 0;
     y = 0;
+    size = 18;
     color = "";
     text = "";
 
     render(context2D: CanvasRenderingContext2D) {
         context2D.fillStyle = this.color;
-        context2D.fillText(this.text, this.x, this.y);
+        context2D.fillText(this.text, this.x, this.y + this.size);
+    }
+
+    hitTest(x : number,y :number){
+        var rect = new math.Rectangle();
+        rect.x = rect.y = 0;
+        rect.width = this.size * this.text.length;
+        rect.height = this.size;
+        if(rect.isPointInRectangle(x,y)){
+            //
+            return this;
+        }
+        else{
+            return null;
+        }
     }
 }
 
 class DisplayObjectContainer extends DisplayObject {
-    array: Drawable[] = [];
+    array: DisplayObject[] = [];
     addChild(displayObject: DisplayObject) {
         if(this.array.indexOf(displayObject) == -1){
             this.array.push(displayObject);
@@ -311,8 +369,33 @@ class DisplayObjectContainer extends DisplayObject {
         }
     }
     render(context2D: CanvasRenderingContext2D) {
-        for (let drawable of this.array) {
-            drawable.draw(context2D);
+        for (let displayObject of this.array) {
+            displayObject.draw(context2D);
         }
+    }
+
+    hitTest(x : number, y : number) : DisplayObject{
+        var rect = new math.Rectangle();
+        rect.x = rect.y = 0;
+        rect.width = this.width;
+        rect.height = this.height;
+        var result = null;
+        if(rect.isPointInRectangle(x, y)){
+            result = this;
+            //
+            for(let i = this.array.length - 1; i >= 0; i--){
+                var child = this.array[i];
+                var point = new math.Point(x,y);
+                var invertChildenLocalMatirx = math.invertMatrix(child.matrix);
+                var pointBasedOnChild = math.pointAppendMatrix(point,invertChildenLocalMatirx);
+                var hitTestResult = child.hitTest(pointBasedOnChild.x,pointBasedOnChild.y);
+                if(hitTestResult){
+                    result = hitTestResult;
+                    break;
+                }
+            }
+            return result;
+        }
+        return null;
     }
 }
